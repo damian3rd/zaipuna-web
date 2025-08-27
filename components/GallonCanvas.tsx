@@ -5,34 +5,37 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { Environment, OrbitControls, useGLTF, Center } from "@react-three/drei";
 import * as THREE from "three";
 
-// Sizing / positioning knobs
-const MODEL_SCALE = 0.7;
+// Base sizing/position
+const MODEL_SCALE_BASE = 0.7;
 const BASE_Y_OFFSET = -0.35;
 const Y_MIN = -0.55;
 const Y_MAX = 0.02;
-// Disable vertical parallax during the pin to avoid clipping
-const PARALLAX_K = 0.0;
+const PARALLAX_K = 0.0; // keep stable while pinned
 
-// Rotation knobs (same axis = Y)
-const BASE_Y_ROT = -0.35; // initial slight twist toward viewer
-const ROT_TURNS = 0.85; // 0..N turns (0.85 ~ 306°)
-const ROT_LERP = 0.12; // smoothing for rotation
+// Rotation (Y-axis) driven by hero progress
+const BASE_Y_ROT = -0.35;
+const ROT_TURNS = 0.85;
+const ROT_LERP = 0.12;
+
+// Shrink after letters lift
+const SHRINK_START = 0.86; // begin shrinking when benefits start
+const SHRINK_MAX = 0.8; // scale multiplier at p=1 (80% of base)
+const SCALE_LERP = 0.12;
 
 function GallonModel() {
-  const group = useRef<THREE.Group>(null!);
-  const gltf = useGLTF("/Assets/3D/milk_gallon.glb") as { scene: THREE.Group };
+  const group = useRef<THREE.Group>(null!); // overall position/rotation
+  const scaleGroup = useRef<THREE.Group>(null!); // separate scale control
+  const gltf = useGLTF("/Assets/3D/milk_gallon.glb") as any;
 
   const scrollY = useRef(0);
-  const heroP = useRef(0); // progress from PinnedHero (0..1)
+  const heroP = useRef(0);
 
-  // Track page scroll for (optional) vertical parallax
   useEffect(() => {
     const onScroll = () => (scrollY.current = window.scrollY);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Listen to pinned hero progress to drive rotation
   useEffect(() => {
     const onHero = (e: Event) => {
       const detail = (e as CustomEvent<{ p: number }>).detail;
@@ -44,9 +47,9 @@ function GallonModel() {
   }, []);
 
   useFrame(() => {
-    if (!group.current) return;
+    if (!group.current || !scaleGroup.current) return;
 
-    // Vertical position (kept stable unless you want slight parallax)
+    // position (Y only)
     const parallax = -scrollY.current * PARALLAX_K;
     const targetY = THREE.MathUtils.clamp(
       BASE_Y_OFFSET + parallax,
@@ -59,24 +62,39 @@ function GallonModel() {
       0.08
     );
 
-    // Scroll-driven rotation around Y (same axis)
+    // rotation around Y
     const targetAngleY = BASE_Y_ROT + Math.PI * 2 * ROT_TURNS * heroP.current;
     group.current.rotation.y = THREE.MathUtils.lerp(
       group.current.rotation.y,
       targetAngleY,
       ROT_LERP
     );
-
-    // Keep slight tilt in X/Z for depth
     group.current.rotation.x = 0.05;
     group.current.rotation.z = 0.08;
+
+    // scale down after letters are gone
+    const t = THREE.MathUtils.clamp(
+      (heroP.current - SHRINK_START) / (1 - SHRINK_START),
+      0,
+      1
+    );
+    const e = t * t * (3 - 2 * t); // smoothstep
+    const targetScale = MODEL_SCALE_BASE * (1 - (1 - SHRINK_MAX) * e);
+    const s = THREE.MathUtils.lerp(
+      scaleGroup.current.scale.x,
+      targetScale,
+      SCALE_LERP
+    );
+    scaleGroup.current.scale.setScalar(s);
   });
 
   return (
     <group ref={group} position={[0, BASE_Y_OFFSET, 0]} dispose={null}>
-      <Center>
-        <primitive object={gltf.scene} scale={MODEL_SCALE} />
-      </Center>
+      <group ref={scaleGroup}>
+        <Center>
+          <primitive object={gltf.scene} />
+        </Center>
+      </group>
     </group>
   );
 }

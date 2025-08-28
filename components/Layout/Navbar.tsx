@@ -18,19 +18,19 @@ const Navbar = () => {
         <div className="hidden md:block">
           <div className="flex items-baseline space-x-8 bg-white/80 backdrop-blur-md border border-gray-200 rounded-3xl px-4 py-2">
             <Link
-              href="/"
+              href="/about"
               className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors"
             >
               ABOUT
             </Link>
             <Link
-              href="/about"
+              href="/shop"
               className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors"
             >
               SHOP
             </Link>
             <Link
-              href="/contact"
+              href="/learn"
               className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors"
             >
               LEARN
@@ -52,9 +52,11 @@ const Navbar = () => {
       <div className="absolute right-0 top-0 h-16 flex items-center px-4 sm:px-6 lg:px-8">
         {/* Desktop CTA Button */}
         <div className="hidden md:block">
-          <Button className="hover:bg-blue-400 text-white rounded-3xl border border-gray-300">
-            CART
-          </Button>
+          <Link href="/cart">
+            <Button className="hover:bg-blue-400 text-white rounded-3xl border border-gray-300">
+              CART
+            </Button>
+          </Link>
         </div>
 
         {/* Mobile menu button */}
@@ -106,16 +108,22 @@ const Navbar = () => {
               About
             </Link>
             <Link
-              href="/services"
+              href="/shop"
               className="text-gray-700 hover:text-gray-900 block px-3 py-2 text-base font-medium transition-colors"
             >
-              Services
+              Shop
             </Link>
             <Link
-              href="/contact"
+              href="/learn"
               className="text-gray-700 hover:text-gray-900 block px-3 py-2 text-base font-medium transition-colors"
             >
-              Contact
+              Learn
+            </Link>
+            <Link
+              href="/cart"
+              className="text-gray-700 hover:text-gray-900 block px-3 py-2 text-base font-medium transition-colors"
+            >
+              Cart
             </Link>
             <div className="pt-4">
               <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
